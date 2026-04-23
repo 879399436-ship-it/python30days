@@ -1,0 +1,329 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.container { padding: 1.5rem 0; }
+.header { margin-bottom: 1.5rem; }
+.header h1 { font-size: 20px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.header p { font-size: 13px; color: var(--color-text-secondary); }
+.week-tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.tab { padding: 6px 14px; border-radius: 20px; border: 0.5px solid var(--color-border-secondary); font-size: 13px; cursor: pointer; background: transparent; color: var(--color-text-secondary); transition: all 0.15s; }
+.tab.active { background: #7F77DD; color: #fff; border-color: #7F77DD; }
+.tab:hover:not(.active) { background: var(--color-background-secondary); color: var(--color-text-primary); }
+.progress-bar { height: 4px; background: var(--color-border-tertiary); border-radius: 2px; margin-bottom: 1.25rem; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 2px; background: #7F77DD; transition: width 0.4s; }
+.days-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.day-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px; cursor: pointer; transition: border-color 0.15s, transform 0.1s; }
+.day-card:hover { border-color: var(--color-border-secondary); transform: translateY(-1px); }
+.day-card.selected { border-color: #7F77DD; border-width: 1.5px; }
+.day-num { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.day-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; line-height: 1.4; }
+.day-tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+.detail-panel { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; }
+.detail-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 1rem; }
+.detail-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.detail-meta h2 { font-size: 16px; font-weight: 500; color: var(--color-text-primary); }
+.detail-meta p { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.sections { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+.section { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px; }
+.section-title { font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.section ul { list-style: none; }
+.section ul li { font-size: 13px; color: var(--color-text-primary); padding: 3px 0; padding-left: 14px; position: relative; line-height: 1.5; }
+.section ul li::before { content: '·'; position: absolute; left: 0; color: #7F77DD; font-weight: 700; }
+.project-box { background: #EEEDFE; border-radius: var(--border-radius-md); padding: 12px; border-left: 3px solid #7F77DD; margin-bottom: 10px; }
+.project-box .proj-label { font-size: 11px; color: #534AB7; font-weight: 500; margin-bottom: 4px; }
+.project-box .proj-text { font-size: 13px; color: #3C3489; line-height: 1.5; }
+.tip-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px; }
+.tip-box .tip-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.tip-box .tip-text { font-size: 13px; color: var(--color-text-primary); line-height: 1.5; }
+.ask-btn { margin-top: 10px; width: 100%; padding: 8px; background: transparent; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 13px; color: var(--color-text-secondary); cursor: pointer; }
+.ask-btn:hover { background: var(--color-background-secondary); }
+@media (max-width: 500px) { .sections { grid-template-columns: 1fr; } }
+</style>
+
+<div class="container">
+  <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Python 30天入门学习计划，每日30分钟</h2>
+  <div class="header">
+    <h1>Python 30天入门学习计划</h1>
+    <p>每日 30 分钟 · 由易到难 · 以实际场景为示例</p>
+  </div>
+
+  <div class="week-tabs" id="weekTabs"></div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="days-grid" id="daysGrid"></div>
+  <div class="detail-panel" id="detailPanel"></div>
+</div>
+
+<script>
+const weeks = [
+  { label: "第一周", subtitle: "基础语法", color: "#7F77DD", bg: "#EEEDFE", emoji: "🌱" },
+  { label: "第二周", subtitle: "数据结构", color: "#1D9E75", bg: "#E1F5EE", emoji: "🔧" },
+  { label: "第三周", subtitle: "函数与模块", color: "#D85A30", bg: "#FAECE7", emoji: "⚙️" },
+  { label: "第四周", subtitle: "实战项目", color: "#185FA5", bg: "#E6F1FB", emoji: "🚀" }
+];
+
+const days = [
+  { week:1, day:1, title:"Python是什么？安装与运行", emoji:"🐍",
+    learn:["Python的应用场景（数据/AI/Web）","安装Python与VS Code","运行第一个Hello World程序","了解交互式终端REPL"],
+    practice:["用print()输出你的名字","计算2+3并打印结果"],
+    project:"场景：打印你的个人名片——姓名、城市、一句话自我介绍",
+    tip:"遇到报错别慌，红字是你最好的老师，复制错误信息到浏览器搜索即可" },
+
+  { week:1, day:2, title:"变量与数据类型", emoji:"📦",
+    learn:["变量的定义与命名规则","整数 int / 浮点数 float","字符串 str / 布尔值 bool","type() 查看数据类型"],
+    practice:["定义5个不同类型的变量","用type()分别打印它们"],
+    project:"场景：记录一道菜的信息——菜名(str)、价格(float)、是否辣(bool)、份数(int)",
+    tip:"变量名用英文、小写+下划线，如 user_name，别用拼音" },
+
+  { week:1, day:3, title:"字符串操作", emoji:"✂️",
+    learn:["字符串拼接与 f-string 格式化","len() 计算长度","upper() / lower() / strip()","字符串切片 s[0:3]"],
+    practice:["用f-string生成一句问候语","提取字符串的前三个字符"],
+    project:"场景：把用户姓名变成带欢迎语的横幅，例如「★ 欢迎 小明！★」",
+    tip:"f-string是现代Python最推荐的格式化方式，记住 f'Hello {name}' 即可" },
+
+  { week:1, day:4, title:"数字运算与输入", emoji:"🔢",
+    learn:["加减乘除 / 整除 // / 取余 %","input() 获取用户输入","int() / float() 类型转换","round() 四舍五入"],
+    practice:["让用户输入两个数并求和","计算圆的面积(r=5)"],
+    project:"场景：制作一个简易小费计算器——输入消费金额，自动计算15%小费",
+    tip:"input()返回的永远是字符串，做运算前记得转换类型" },
+
+  { week:1, day:5, title:"条件判断 if / elif / else", emoji:"🚦",
+    learn:["if / elif / else 语法","比较运算符 > < == != >=","逻辑运算符 and / or / not","缩进是Python的灵魂！"],
+    practice:["判断一个数是正数/负数/零","判断年份是否为闰年"],
+    project:"场景：制作体重指数BMI判断器——输入身高体重，输出「偏轻/正常/超重」",
+    tip:"Python靠缩进（4个空格）区分代码块，混用Tab和空格会报错" },
+
+  { week:1, day:6, title:"循环 for 与 while", emoji:"🔁",
+    learn:["for 循环遍历 range()","while 循环与退出条件","break / continue 控制流","嵌套循环（简单示例）"],
+    practice:["打印1到10的平方","用while循环猜数字游戏"],
+    project:"场景：打印一个5行的星号三角形图案",
+    tip:"while循环一定要有退出条件，否则会变成无限循环" },
+
+  { week:1, day:7, title:"第一周综合练习", emoji:"🏆",
+    learn:["回顾变量、字符串、运算","回顾条件判断与循环","发现自己的知识盲区","独立完成一个小程序"],
+    practice:["不看笔记，默写本周核心语法","改进之前的任意一个练习"],
+    project:"场景：制作文字版「自动售货机」——显示商品菜单，输入编号，计算找零",
+    tip:"遇到不会的先尝试自己解决，实在不行再查，这个过程本身就是学习" },
+
+  { week:2, day:8, title:"列表 list", emoji:"📋",
+    learn:["创建列表与访问元素","append() / remove() / pop()","列表切片与遍历","len() 与 sorted()"],
+    practice:["管理一个购物清单","找出列表中的最大值"],
+    project:"场景：制作待办事项列表——可以添加任务、删除任务、查看所有任务",
+    tip:"列表索引从0开始，最后一个元素用 -1 访问，这是Python的惯例" },
+
+  { week:2, day:9, title:"元组与集合", emoji:"🎯",
+    learn:["元组 tuple 的不可变性","什么时候用元组 vs 列表","集合 set 与去重","交集 / 并集 / 差集"],
+    practice:["用集合给列表去重","用元组存储城市坐标"],
+    project:"场景：分析一篇文章中出现的不重复单词，统计词汇量",
+    tip:"坐标、颜色RGB这类不该被修改的数据，选元组更安全" },
+
+  { week:2, day:10, title:"字典 dictionary", emoji:"📖",
+    learn:["创建字典 {key: value}","增删改查操作","keys() / values() / items()","遍历字典"],
+    practice:["创建一个学生成绩字典","查询并修改某科成绩"],
+    project:"场景：制作一个简单的通讯录——存储姓名和电话，支持查询",
+    tip:"字典的key必须唯一且不可变，字符串和数字可以作为key" },
+
+  { week:2, day:11, title:"列表推导式与常用技巧", emoji:"⚡",
+    learn:["列表推导式 [x for x in ...]","带条件的推导式","enumerate() 同时获取索引","zip() 合并两个列表"],
+    practice:["用推导式生成偶数列表","用zip把姓名和分数配对"],
+    project:"场景：处理一份成绩单，筛选出60分以上的学生姓名列表",
+    tip:"推导式代码简洁但别过度，超过两层条件就老老实实写for循环" },
+
+  { week:2, day:12, title:"文件读写", emoji:"📄",
+    learn:["open() 打开文件","read() / write() / readline()","with语句自动关闭文件","处理文本文件编码"],
+    practice:["把你的名字写入txt文件","读取文件并统计行数"],
+    project:"场景：把每天的日记写入文件，并能读取历史日记",
+    tip:"永远用 with open() as f 的方式，它会自动帮你关闭文件，避免资源泄露" },
+
+  { week:2, day:13, title:"错误处理 try / except", emoji:"🛡️",
+    learn:["try / except 捕获异常","常见异常类型 ValueError / ZeroDivisionError","finally 始终执行的代码","主动抛出 raise"],
+    practice:["给计算器加上除零保护","处理用户输入非数字的情况"],
+    project:"场景：改造小费计算器，让它能优雅处理用户的错误输入",
+    tip:"不要用 except: 裸捕获所有异常，那会隐藏真正的bug" },
+
+  { week:2, day:14, title:"第二周综合练习", emoji:"🏆",
+    learn:["综合运用列表/字典/文件","设计数据存储方案","代码重构与整理","养成注释的习惯"],
+    practice:["给上周的自动售货机加上存货管理","将数据保存到文件"],
+    project:"场景：制作一个「学生成绩管理系统」——录入/查询/保存成绩到文件",
+    tip:"好代码应该像散文一样可读，变量名和注释是写给未来的自己的" },
+
+  { week:3, day:15, title:"函数定义与调用", emoji:"🔨",
+    learn:["def 定义函数","参数与返回值 return","位置参数与关键字参数","函数文档字符串 docstring"],
+    practice:["封装BMI计算为函数","写一个计算圆面积的函数"],
+    project:"场景：把自动售货机改造成函数化版本，每个功能独立成一个函数",
+    tip:"一个函数只做一件事，函数名用动词开头，如 calculate_bmi()" },
+
+  { week:3, day:16, title:"函数进阶：默认值与可变参数", emoji:"⚙️",
+    learn:["默认参数值","*args 接收任意数量参数","**kwargs 接收关键字参数","lambda 匿名函数"],
+    practice:["写一个支持任意数字求和的函数","用lambda对列表排序"],
+    project:"场景：制作一个灵活的「打折计算器」函数，默认九折，可自定义折扣",
+    tip:"默认参数不要用可变对象（如列表），这是Python中常见的陷阱" },
+
+  { week:3, day:17, title:"模块与包", emoji:"📦",
+    learn:["import 导入标准库","from ... import 特定函数","常用标准库：math/random/datetime","自己创建并导入模块"],
+    practice:["用random生成彩票号码","用datetime显示今天是星期几"],
+    project:"场景：制作「每日随机任务生成器」，从任务库中随机抽取今日挑战",
+    tip:"Python自带电池（batteries included），先搜索有没有现成的标准库再自己造轮子" },
+
+  { week:3, day:18, title:"面向对象初步：类与对象", emoji:"🏗️",
+    learn:["class 定义类","__init__ 构造方法","实例属性与实例方法","创建对象与调用方法"],
+    practice:["创建一个Dog类，有name和bark()","创建一个Rectangle类，计算面积"],
+    project:"场景：设计「银行账户」类——可以存款、取款、查询余额",
+    tip:"类名用大驼峰命名法 BankAccount，方法名用小写下划线" },
+
+  { week:3, day:19, title:"面向对象进阶：继承", emoji:"🧬",
+    learn:["继承与父类 super()","方法重写 override","isinstance() 类型检查","__str__ 让对象可打印"],
+    practice:["让Cat继承Animal类","给BankAccount添加VIP子类"],
+    project:"场景：设计「员工管理」：Employee基类，Manager和Developer子类，各有特殊属性",
+    tip:"继承不是越多越好，优先考虑组合（has-a）而非继承（is-a）" },
+
+  { week:3, day:20, title:"pip与第三方库", emoji:"🌐",
+    learn:["pip install 安装库","pip list 查看已安装库","虚拟环境 venv 的概念","requests库发起网络请求"],
+    practice:["安装requests库","获取一个公开API的数据并打印"],
+    project:"场景：调用天气API获取今天的天气信息并格式化输出",
+    tip:"每个项目建议单独创建虚拟环境，避免库版本冲突" },
+
+  { week:3, day:21, title:"第三周综合练习", emoji:"🏆",
+    learn:["函数+类+模块综合应用","代码组织与拆分","设计思维：先想架构再写代码","代码可读性优化"],
+    practice:["重构成绩管理系统为类的版本","拆分代码到多个文件"],
+    project:"场景：制作「个人记账本」——Account类、按日期记录收支、计算月度汇总",
+    tip:"在写代码之前先画流程图或写伪代码，思路清晰了代码自然简洁" },
+
+  { week:4, day:22, title:"数据分析入门：pandas基础", emoji:"📊",
+    learn:["安装并导入pandas","创建DataFrame","读取CSV文件","基本统计 describe()"],
+    practice:["创建一个简单的数据表","读取CSV并查看前5行"],
+    project:"场景：分析一份超市销售数据CSV——查看总销售额、平均单价",
+    tip:"pandas是Python数据分析的核心库，值得花时间深入学习" },
+
+  { week:4, day:23, title:"数据可视化：matplotlib基础", emoji:"📈",
+    learn:["安装matplotlib","绘制折线图与柱状图","添加标题、轴标签、图例","保存图片到文件"],
+    practice:["绘制过去一周的气温折线图","绘制各科成绩柱状图"],
+    project:"场景：将超市销售数据可视化——按商品类别绘制销售额柱状图",
+    tip:"Seaborn库基于matplotlib，样式更好看，以后可以深入学习" },
+
+  { week:4, day:24, title:"网络爬虫初步", emoji:"🕷️",
+    learn:["HTTP请求与响应的概念","requests获取网页内容","BeautifulSoup解析HTML","提取目标数据"],
+    practice:["爬取一个新闻网站的标题","提取页面中所有链接"],
+    project:"场景：爬取豆瓣Top10电影名称和评分，保存到CSV文件",
+    tip:"爬虫要遵守网站的robots.txt，不要频繁请求，加上time.sleep()设置间隔" },
+
+  { week:4, day:25, title:"正则表达式", emoji:"🔍",
+    learn:["re模块基础","常用模式：\\d \\w \\s . * +","re.search() / re.findall()","实际文本提取场景"],
+    practice:["从文本中提取所有手机号","验证邮箱格式是否正确"],
+    project:"场景：从一段招聘文本中，自动提取所有薪资数字（如「15k-25k」）",
+    tip:"正则表达式写完后一定要测试，推荐用 regex101.com 可视化调试" },
+
+  { week:4, day:26, title:"JSON数据处理", emoji:"🗂️",
+    learn:["JSON格式介绍","json.loads() 解析JSON字符串","json.dumps() 转换为JSON","读写JSON文件"],
+    practice:["把字典转为JSON并保存","读取JSON文件并查询数据"],
+    project:"场景：将记账本数据改为JSON格式存储，支持多账户",
+    tip:"JSON是现代API数据交换的标准格式，学会它才能与各种服务对接" },
+
+  { week:4, day:27, title:"综合项目：命令行工具", emoji:"🛠️",
+    learn:["sys.argv 接收命令行参数","argparse 库","项目结构设计","README文档的重要性"],
+    practice:["制作一个命令行版计算器","添加 --help 参数说明"],
+    project:"场景：制作「个人财务分析CLI工具」——输入月份，生成收支报告",
+    tip:"命令行工具是展示你Python能力的最快方式，可以直接放到简历上" },
+
+  { week:4, day:28, title:"自动化脚本实战", emoji:"🤖",
+    learn:["os / pathlib 文件系统操作","批量重命名文件","定时任务的思路","shutil 文件复制/移动"],
+    practice:["批量给图片文件加日期前缀","统计某文件夹下各类型文件数量"],
+    project:"场景：制作「下载文件自动整理器」——按扩展名将文件分类到不同文件夹",
+    tip:"日常重复操作超过3次，就值得写个脚本自动化，这正是Python最擅长的" },
+
+  { week:4, day:29, title:"代码质量与调试技巧", emoji:"🔬",
+    learn:["print调试 vs pdb调试器","断点设置","代码风格 PEP 8","用pylint检查代码质量"],
+    practice:["故意制造bug并用调试器找到它","用pylint扫描之前写的代码"],
+    project:"场景：回顾并重构第一周的所有练习代码，让它们符合PEP 8规范",
+    tip:"好的程序员70%时间在读代码、30%在写代码——可读性比技巧更重要" },
+
+  { week:4, day:30, title:"毕业项目：完整小应用", emoji:"🎓",
+    learn:["综合应用30天所学","独立设计解决方案","项目文档与注释","展示你的学习成果！"],
+    practice:["完成下方毕业项目","为代码写README说明"],
+    project:"场景：【毕业作品】「个人数据仪表盘」——读取你的记账JSON，爬取今日天气，用matplotlib生成可视化报告，保存为图片",
+    tip:"完成是最好的完美。先让程序跑起来，再逐步优化。恭喜你完成30天学习！🎉" },
+];
+
+let currentWeek = 1;
+let selectedDay = 1;
+
+function getWeekColor(w) { return weeks[w-1].color; }
+function getWeekBg(w) { return weeks[w-1].bg; }
+
+function renderTabs() {
+  const el = document.getElementById('weekTabs');
+  el.innerHTML = weeks.map((w,i) => `
+    <button class="tab ${currentWeek===i+1?'active':''}" onclick="selectWeek(${i+1})">
+      ${w.emoji} ${w.label}·${w.subtitle}
+    </button>
+  `).join('');
+}
+
+function renderProgress() {
+  const fill = document.getElementById('progressFill');
+  const weekDays = days.filter(d=>d.week===currentWeek);
+  fill.style.width = (currentWeek/4*100)+'%';
+  fill.style.background = getWeekColor(currentWeek);
+}
+
+function renderGrid() {
+  const el = document.getElementById('daysGrid');
+  const weekDays = days.filter(d=>d.week===currentWeek);
+  el.innerHTML = weekDays.map(d => {
+    const sel = selectedDay === d.day;
+    return `<div class="day-card ${sel?'selected':''}" onclick="selectDay(${d.day})" style="${sel?'border-color:'+getWeekColor(d.week)+';':''} ">
+      <div class="day-num" style="color:${getWeekColor(d.week)}">第 ${d.day} 天</div>
+      <div class="day-title">${d.emoji} ${d.title}</div>
+      <span class="day-tag" style="background:${getWeekBg(d.week)};color:${getWeekColor(d.week)}">${weeks[d.week-1].subtitle}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderDetail() {
+  const d = days.find(x=>x.day===selectedDay);
+  if(!d) return;
+  const color = getWeekColor(d.week);
+  const bg = getWeekBg(d.week);
+  document.getElementById('detailPanel').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-icon" style="background:${bg};font-size:22px;">${d.emoji}</div>
+      <div class="detail-meta">
+        <h2>第 ${d.day} 天：${d.title}</h2>
+        <p>${weeks[d.week-1].label} · ${weeks[d.week-1].subtitle} · 预计 30 分钟</p>
+      </div>
+    </div>
+    <div class="sections">
+      <div class="section">
+        <div class="section-title">今日学习内容</div>
+        <ul>${d.learn.map(l=>`<li>${l}</li>`).join('')}</ul>
+      </div>
+      <div class="section">
+        <div class="section-title">动手练习</div>
+        <ul>${d.practice.map(p=>`<li>${p}</li>`).join('')}</ul>
+      </div>
+    </div>
+    <div class="project-box">
+      <div class="proj-label">实际场景项目</div>
+      <div class="proj-text">${d.project}</div>
+    </div>
+    <div class="tip-box">
+      <div class="tip-label">今日小贴士</div>
+      <div class="tip-text">${d.tip}</div>
+    </div>
+    <button class="ask-btn" onclick="sendPrompt('我在学Python第${d.day}天：${d.title}，请给我这个主题的详细讲解和代码示例')">请Claude详细讲解这个主题 ↗</button>
+  `;
+}
+
+function selectWeek(w) {
+  currentWeek = w;
+  selectedDay = days.find(d=>d.week===w)?.day || 1;
+  renderTabs(); renderProgress(); renderGrid(); renderDetail();
+}
+
+function selectDay(d) {
+  selectedDay = d;
+  renderGrid(); renderDetail();
+}
+
+renderTabs(); renderProgress(); renderGrid(); renderDetail();
+</script>
